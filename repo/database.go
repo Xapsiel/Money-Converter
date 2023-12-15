@@ -26,12 +26,15 @@ type JsonResult struct {
 	conversion_rates                                                                           map[string]float64
 }
 
-func (db *DataBase) GetCoef(from_currency, to_currency string) float64 {
-	data := db.Read() //считываем json файл
-	var document []jsonFormat
-	err := json.Unmarshal(data, &document) //превращаем json в формат []jsonFormat
+func (db *DataBase) GetCoef(from_currency, to_currency string) (float64, error) {
+	data, err := db.Read() //считываем json файл
 	if err != nil {
-		panic(err)
+		return -1.0, err
+	}
+	var document []jsonFormat
+	err = json.Unmarshal(data, &document) //превращаем json в формат []jsonFormat
+	if err != nil {
+		return -1.0, err
 	}
 	date := time.Now()
 	year := date.Year()
@@ -39,18 +42,21 @@ func (db *DataBase) GetCoef(from_currency, to_currency string) float64 {
 	day := date.Day()
 	for _, elem := range document {
 		if elem.Year == year && elem.Month == month && elem.Day == day { //если дата совпадает с актуальной датой,то возвращаем курс относительно доллара
-			return elem.Conversion_rates[to_currency].(float64) / elem.Conversion_rates[from_currency].(float64)
+			return elem.Conversion_rates[to_currency].(float64) / elem.Conversion_rates[from_currency].(float64), nil
 		}
 	}
-	return -1
+	return -1.0, err
 }
-func (db *DataBase) GetAllCoef(from_currency, to_currency string) map[string]float64 {
+func (db *DataBase) GetAllCoef(from_currency, to_currency string) (map[string]float64, error) {
 	result := make(map[string]float64)
-	data := db.Read() //считываем json файл
-	var document []jsonFormat
-	err := json.Unmarshal(data, &document) //превращаем json в формат []jsonFormat
+	data, err := db.Read() //считываем json файл
 	if err != nil {
-		panic(err)
+		return nil, err
+	}
+	var document []jsonFormat
+	err = json.Unmarshal(data, &document) //превращаем json в формат []jsonFormat
+	if err != nil {
+		return nil, err
 	}
 	for _, elem := range document {
 		year := elem.Year
@@ -59,29 +65,31 @@ func (db *DataBase) GetAllCoef(from_currency, to_currency string) map[string]flo
 		key := fmt.Sprintf("%v-%v-%v", day, month, year)
 		result[key] = elem.Conversion_rates[to_currency].(float64) / elem.Conversion_rates[from_currency].(float64)
 	}
-	return result
+	return result, nil
 
 }
-func (db *DataBase) Read() []byte {
-	file, err := os.OpenFile("data.json", os.O_RDWR, 0666)
+func (db *DataBase) Read() ([]byte, error) {
+	file, err := os.OpenFile("repo/data.json", os.O_RDWR, 0666)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return data
+	return data, nil
 }
-func (db *DataBase) Write(code string) {
-	file := db.Read()
+func (db *DataBase) Write(code string) error {
+	file, err := db.Read()
+	if err != nil {
+		return err
+	}
 	var document []jsonFormat
-	err := json.Unmarshal(file, &document)
+	err = json.Unmarshal(file, &document)
 
 	if err != nil {
-
-		panic(err)
+		return err
 	}
 	date := time.Now()
 	new_document := jsonFormat{}
@@ -89,21 +97,24 @@ func (db *DataBase) Write(code string) {
 	new_document.Month = int(date.Month())
 	new_document.Day = date.Day()
 	if !db.check(document, new_document.Day, new_document.Month, new_document.Year) {
-		return
+		return fmt.Errorf("Курс за этот день уже обновлен")
 	}
 
-	jsonRes := db.makeRequest("USD")
+	jsonRes, err := db.makeRequest("USD")
+	if err != nil {
+		return err
+	}
 	new_document.Conversion_rates = jsonRes
 	document = append(document, new_document)
 	result, err := json.Marshal(document)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = ioutil.WriteFile("data.json", result, 0666)
 	if err != nil {
-		panic(err)
+		return err
 	}
-
+	return nil
 }
 func (db *DataBase) check(array []jsonFormat, day, month, year int) bool {
 	for _, elem := range array {
@@ -113,22 +124,22 @@ func (db *DataBase) check(array []jsonFormat, day, month, year int) bool {
 	}
 	return true
 }
-func (db *DataBase) makeRequest(code string) map[string]interface{} {
+func (db *DataBase) makeRequest(code string) (map[string]interface{}, error) {
 	resp, err := http.Get("https://v6.exchangerate-api.com/v6/8dcd9d44d24821df9839a14e/latest/" + code)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	var document interface{}
 	err = json.Unmarshal(body, &document)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	f := document.(map[string]interface{})["conversion_rates"].(map[string]interface{})
 
-	return f
+	return f, nil
 }

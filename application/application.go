@@ -10,7 +10,11 @@ func Convert(from_currency string, to_currency string, value float64) float64 {
 		From_currency: from_currency,
 		To_currency:   to_currency,
 	}
-	conv.Coefficient = conv.GetCoefficient(from_currency, to_currency)
+	coefficient, err := conv.GetCoefficient(from_currency, to_currency)
+	if err != nil {
+		panic(err)
+	}
+	conv.Coefficient = coefficient
 	if conv.Coefficient < 0 {
 		panic(fmt.Errorf("Нет действующего курса"))
 	}
@@ -24,7 +28,10 @@ func MakeGraph(from_currency string, to_currency string, value float64) map[stri
 		To_currency:   to_currency,
 	}
 	result := make(map[string]float64)
-	coefficient := conv.GetAllCoefficient(from_currency, to_currency)
+	coefficient, err := conv.GetAllCoefficient(from_currency, to_currency)
+	if err != nil {
+		panic(err)
+	}
 	for key, elem := range coefficient {
 		result[key] = elem * value
 	}
@@ -32,7 +39,8 @@ func MakeGraph(from_currency string, to_currency string, value float64) map[stri
 
 }
 
-func Update() {
+func Update() error {
 	var conv domain.Currency
-	conv.UpdateDB("USD")
+	err := conv.UpdateDB("USD")
+	return err
 }

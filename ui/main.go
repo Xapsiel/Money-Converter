@@ -53,5 +53,8 @@ func GraphHandler(rw http.ResponseWriter, r *http.Request) {
 }
 
 func updateHandler(rw http.ResponseWriter, r *http.Request) {
-	application.Update()
+	err := application.Update()
+	if err != nil {
+		panic(err)
+	}
 }
