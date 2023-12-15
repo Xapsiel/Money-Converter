@@ -26,5 +26,9 @@ func TestConverterHandler(t *testing.T) {
 	var document interface{}
 	err = json.Unmarshal(body, &document)
 	expected := document.(map[string]interface{})["result"].(float64)
-	assert.Equal(t, expected, application.Convert("RUB", "USD", 100))
+	actual, err := application.Convert("RUB", "USD", 100)
+	if err != nil {
+		panic(err)
+	}
+	assert.Equal(t, expected, actual)
 }

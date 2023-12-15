@@ -29,7 +29,31 @@ func TestGetCoef(t *testing.T) {
 	var document interface{}
 	err = json.Unmarshal(body, &document)
 	expected := document.(map[string]interface{})["conversion_result"].(float64)
+	actual, err := application.Convert(from, to, value)
+	if err != nil {
+		panic(err)
+	}
 
-	actual := math.Abs(expected - application.Convert(from, to, value))
-	assert.GreaterOrEqual(t, 0.01, actual)
+	result := math.Abs(expected - actual)
+	assert.GreaterOrEqual(t, 0.01, result)
+}
+
+func TestErrorGetCoef(t *testing.T) {
+	from := "LERA"
+	to := "GID"
+	value := 1.234567890
+	_, err := application.Convert(from, to, value)
+	if err.Error() != "Нет действующего курса" {
+		t.Fail()
+	}
+
+}
+func TestErrorAllCoef(t *testing.T) {
+	from := "LERA"
+	to := "GID"
+	value := 1.234567890
+	_, err := application.MakeGraph(from, to, value)
+	if err.Error() != "Нет действующего курса" {
+		t.Fail()
+	}
 }

@@ -2,27 +2,24 @@ package application
 
 import (
 	"converter/domain"
-	"fmt"
 )
 
-func Convert(from_currency string, to_currency string, value float64) float64 {
+func Convert(from_currency string, to_currency string, value float64) (float64, error) {
 	conv := domain.Currency{
 		From_currency: from_currency,
 		To_currency:   to_currency,
 	}
-	coefficient, err := conv.GetCoefficient(from_currency, to_currency)
+	coefficient, err := conv.GetCoefficient(from_currency, to_currency) //получение актуального курса
+
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 	conv.Coefficient = coefficient
-	if conv.Coefficient < 0 {
-		panic(fmt.Errorf("Нет действующего курса"))
-	}
 	result := value * conv.Coefficient
-	return result
+	return result, nil
 }
 
-func MakeGraph(from_currency string, to_currency string, value float64) map[string]float64 {
+func MakeGraph(from_currency string, to_currency string, value float64) (map[string]float64, error) {
 	conv := domain.Currency{
 		From_currency: from_currency,
 		To_currency:   to_currency,
@@ -30,12 +27,12 @@ func MakeGraph(from_currency string, to_currency string, value float64) map[stri
 	result := make(map[string]float64)
 	coefficient, err := conv.GetAllCoefficient(from_currency, to_currency)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	for key, elem := range coefficient {
 		result[key] = elem * value
 	}
-	return result
+	return result, nil
 
 }
 

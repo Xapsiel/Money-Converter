@@ -30,7 +30,11 @@ func converterHandler(rw http.ResponseWriter, r *http.Request) {
 	to := value["to"]
 	cash, _ := strconv.ParseFloat(value["cash"], 64)
 	rw.Header().Set("Content-Type", "application/json")
-	result := converterFormat{From: from, To: to, Value: cash, Result: application.Convert(from, to, cash)}
+	forRes, err := application.Convert(from, to, cash)
+	if err != nil {
+		panic(err)
+	}
+	result := converterFormat{From: from, To: to, Value: cash, Result: forRes}
 	res, _ := json.Marshal(result)
 	rw.Write([]byte(res))
 }
@@ -47,7 +51,11 @@ func GraphHandler(rw http.ResponseWriter, r *http.Request) {
 	from := value["from"]
 	to := value["to"]
 	cash, _ := strconv.ParseFloat(value["cash"], 64)
-	result := GraphFormat{From: from, To: to, Value: cash, Result: application.MakeGraph(from, to, cash)}
+	forRes, err := application.MakeGraph(from, to, cash)
+	if err != nil {
+		panic(err)
+	}
+	result := GraphFormat{From: from, To: to, Value: cash, Result: forRes}
 	res, _ := json.Marshal(result)
 	rw.Write([]byte(res))
 }
