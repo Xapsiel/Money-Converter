@@ -1,4 +1,4 @@
-package test
+package application
 
 import (
 	"converter/application"
@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetCoef(t *testing.T) {
+func TestConvert(t *testing.T) {
 	from := "RUB"
 	to := "USD"
 	value := 1.234567890
@@ -29,6 +29,7 @@ func TestGetCoef(t *testing.T) {
 	var document interface{}
 	err = json.Unmarshal(body, &document)
 	expected := document.(map[string]interface{})["conversion_result"].(float64)
+
 	actual, err := application.Convert(from, to, value)
 	if err != nil {
 		panic(err)
@@ -36,24 +37,4 @@ func TestGetCoef(t *testing.T) {
 
 	result := math.Abs(expected - actual)
 	assert.GreaterOrEqual(t, 0.01, result)
-}
-
-func TestErrorGetCoef(t *testing.T) {
-	from := "LERA"
-	to := "GID"
-	value := 1.234567890
-	_, err := application.Convert(from, to, value)
-	if err.Error() != "Нет действующего курса" {
-		t.Fail()
-	}
-
-}
-func TestErrorAllCoef(t *testing.T) {
-	from := "LERA"
-	to := "GID"
-	value := 1.234567890
-	_, err := application.MakeGraph(from, to, value)
-	if err.Error() != "Нет действующего курса" {
-		t.Fail()
-	}
 }

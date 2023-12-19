@@ -18,26 +18,3 @@ func Convert(from_currency string, to_currency string, value float64) (float64, 
 	result := value * conv.Coefficient
 	return result, nil
 }
-
-func MakeGraph(from_currency string, to_currency string, value float64) (map[string]float64, error) {
-	conv := domain.Currency{
-		From_currency: from_currency,
-		To_currency:   to_currency,
-	}
-	result := make(map[string]float64)
-	coefficient, err := conv.GetAllCoefficient(from_currency, to_currency)
-	if err != nil {
-		return nil, err
-	}
-	for key, elem := range coefficient {
-		result[key] = elem * value
-	}
-	return result, nil
-
-}
-
-func Update() error {
-	var conv domain.Currency
-	err := conv.UpdateDB("USD")
-	return err
-}
