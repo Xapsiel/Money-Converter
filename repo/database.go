@@ -3,8 +3,10 @@ package repo
 import (
 	domain "converter/domain/interface"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 type DataBase struct {
@@ -30,6 +32,9 @@ func (db *DataBase) GetCoef(from_currency, to_currency string) (float64, error) 
 		return -1, err
 	}
 	defer resp.Body.Close()
+	if resp.Status != "200 OK" {
+		return -1, fmt.Errorf("Ошибка при получении данных")
+	}
 	body, err := ioutil.ReadAll(resp.Body) //считываем ответ
 	if err != nil {
 		return -1, err
@@ -39,6 +44,10 @@ func (db *DataBase) GetCoef(from_currency, to_currency string) (float64, error) 
 	if err != nil {
 		return -1, err
 	}
-	f := document.(map[string]interface{})["conversion_rate"] //возвразаем курсы относительно code
-	return f.(float64), nil
+	f := document.(map[string]interface{})["conversion_rate"].(float64) //возвразаем курсы относительно code
+	round_f, err := strconv.ParseFloat(fmt.Sprintf("%.2f", f), 64)      // s == "12.35"
+	if err != nil {
+		return -1, err
+	}
+	return round_f, nil
 }
