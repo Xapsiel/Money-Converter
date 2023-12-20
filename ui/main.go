@@ -14,7 +14,7 @@ func main() {
 	router.HandleFunc("/convert/{from}/{to}/{cash}", converterHandler)
 	router.HandleFunc("/makeGraph/{from}/{to}/{cash}", GraphHandler)
 	router.HandleFunc("/update", updateHandler)
-	http.ListenAndServe(":80", router)
+	http.ListenAndServe(":8080", router)
 }
 
 type converterFormat struct {

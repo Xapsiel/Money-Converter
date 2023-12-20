@@ -117,7 +117,7 @@ func (db *DataBase) Write(code string) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile("data.json", result, 0666) //записываем в файл
+	err = ioutil.WriteFile("repo/data.json", result, 0666) //записываем в файл
 	if err != nil {
 		return err
 	}

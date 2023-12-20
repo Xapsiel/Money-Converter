@@ -2,6 +2,8 @@ package application
 
 import (
 	"converter/domain"
+	"fmt"
+	"strconv"
 )
 
 func Convert(from_currency string, to_currency string, value float64) (float64, error) {
@@ -14,8 +16,13 @@ func Convert(from_currency string, to_currency string, value float64) (float64, 
 	if err != nil {
 		return 0, err
 	}
+
 	conv.Coefficient = coefficient
 	result := value * conv.Coefficient
+	result, err = strconv.ParseFloat(fmt.Sprintf("%.2f", result), 64)
+	if err != nil {
+		return 0, err
+	}
 	return result, nil
 }
 
