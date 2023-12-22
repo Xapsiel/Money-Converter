@@ -47,7 +47,7 @@ func (db *DataBase) GetCoef(from_currency, to_currency string) (float64, error) 
 			return elem.Conversion_rates[to_currency].(float64) / elem.Conversion_rates[from_currency].(float64), nil
 		}
 	}
-	return -1.0, fmt.Errorf("Курс (%v-%v) за эту дату не был зафиксирован сервером", from_currency, to_currency)
+	return -1.0, fmt.Errorf("Курс за эту дату не был зафиксирован сервером")
 }
 func (db *DataBase) GetCoefByDate(from_currency, to_currency string, day, month, year int) (float64, error) {
 	data, err := db.Read() //считываем json файл
@@ -65,7 +65,7 @@ func (db *DataBase) GetCoefByDate(from_currency, to_currency string, day, month,
 			return elem.Conversion_rates[to_currency].(float64) / elem.Conversion_rates[from_currency].(float64), nil
 		}
 	}
-	return -1.0, fmt.Errorf("Курс (%v-%v) за эту дату не был зафиксирован сервером", from_currency, to_currency)
+	return -1.0, fmt.Errorf("Курс за эту дату не был зафиксирован сервером")
 
 }
 func (db *DataBase) Read() ([]byte, error) {

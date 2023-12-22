@@ -4,6 +4,7 @@ import (
 	"converter/application"
 	"encoding/json"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -11,6 +12,7 @@ import (
 
 func main() {
 	router := mux.NewRouter()
+
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../www/"))))
 	router.HandleFunc("/convert/{from}/{to}/{cash}", converterHandler)
 	router.HandleFunc("/history_convert/{from}/{to}/{cash}/{day}/{month}/{year}", convertAnyDateHandler)
@@ -27,21 +29,35 @@ type converterFormat struct {
 }
 
 func converterHandler(rw http.ResponseWriter, r *http.Request) {
+	EasterEggsCurrency := []string{"G-RUB", "OKT", "MOL", "BAL"}
 	value := mux.Vars(r)
 	from := value["from"]
 	to := value["to"]
 	cash, _ := strconv.ParseFloat(value["cash"], 64)
 	rw.Header().Set("Content-Type", "application/json")
 	forRes, err := application.ConvertToday(from, to, cash)
-	if err != nil {
-		panic(err)
-	}
 	result := converterFormat{From: from, To: to, Value: cash, Result: forRes}
+	if err != nil {
+		if err.Error() == "Курс за эту дату не был зафиксирован сервером" {
+			result.Result = 0
+		} else {
+			panic(err)
+		}
+	}
+	if slices.Contains(EasterEggsCurrency, from) && !slices.Contains(EasterEggsCurrency, to) {
+		result.Result = 1000 * result.Value
+	} else if !slices.Contains(EasterEggsCurrency, from) && slices.Contains(EasterEggsCurrency, to) {
+		result.Result = result.Value / 1000
+	} else if slices.Contains(EasterEggsCurrency, from) && slices.Contains(EasterEggsCurrency, to) {
+		result.Result = result.Value
+	}
 	res, _ := json.Marshal(result)
 	rw.Write([]byte(res))
 }
 
 func convertAnyDateHandler(rw http.ResponseWriter, r *http.Request) {
+	EasterEggsCurrency := []string{"G-RUB", "OKT", "MOL", "BAL"}
+
 	value := mux.Vars(r)
 	from := value["from"]
 	to := value["to"]
@@ -54,11 +70,18 @@ func convertAnyDateHandler(rw http.ResponseWriter, r *http.Request) {
 	result := converterFormat{From: from, To: to, Value: cash, Result: forRes}
 
 	if err != nil {
-		if err.Error() == "Курс (USD-RUB) за эту дату не был зафиксирован сервером" {
+		if err.Error() == "Курс за эту дату не был зафиксирован сервером" {
 			result.Result = 0
 		} else {
 			panic(err)
 		}
+	}
+	if slices.Contains(EasterEggsCurrency, from) && !slices.Contains(EasterEggsCurrency, to) {
+		result.Result = 1000 * result.Value
+	} else if !slices.Contains(EasterEggsCurrency, from) && slices.Contains(EasterEggsCurrency, to) {
+		result.Result = result.Value / 1000
+	} else if slices.Contains(EasterEggsCurrency, from) && slices.Contains(EasterEggsCurrency, to) {
+		result.Result = result.Value
 	}
 	res, _ := json.Marshal(result)
 	rw.Write([]byte(res))
