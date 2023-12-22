@@ -47,32 +47,25 @@ func (db *DataBase) GetCoef(from_currency, to_currency string) (float64, error) 
 			return elem.Conversion_rates[to_currency].(float64) / elem.Conversion_rates[from_currency].(float64), nil
 		}
 	}
-	return -1.0, fmt.Errorf("Нет действующего курса")
+	return -1.0, fmt.Errorf("Курс (%v-%v) за эту дату не был зафиксирован сервером", from_currency, to_currency)
 }
-func (db *DataBase) GetAllCoef(from_currency, to_currency string) (map[string]float64, error) {
-	result := make(map[string]float64)
+func (db *DataBase) GetCoefByDate(from_currency, to_currency string, day, month, year int) (float64, error) {
 	data, err := db.Read() //считываем json файл
 	if err != nil {
-		return nil, err
+		return -1.0, err
 	}
 	var document []jsonFormat
 	err = json.Unmarshal(data, &document) //превращаем json в формат []jsonFormat
 	if err != nil {
-		return nil, err
+		return -1.0, err
 	}
 	for _, elem := range document {
-		year := elem.Year
-		month := elem.Month
-		day := elem.Day
-		key := fmt.Sprintf("%v-%v-%v", day, month, year)
-		//записываем в мапу актуальный курс
-		if elem.Conversion_rates[to_currency] == nil || elem.Conversion_rates[from_currency] == nil { //проверка на существования валюты
-			return nil, fmt.Errorf("Нет действующего курса")
+		//проверка на дату и существование данной валюты
+		if elem.Year == year && elem.Month == month && elem.Day == day && elem.Conversion_rates[from_currency] != nil && elem.Conversion_rates[to_currency] != nil { //если дата совпадает с актуальной датой,то возвращаем курс относительно доллара
+			return elem.Conversion_rates[to_currency].(float64) / elem.Conversion_rates[from_currency].(float64), nil
 		}
-		result[key] = elem.Conversion_rates[to_currency].(float64) / elem.Conversion_rates[from_currency].(float64)
-
 	}
-	return result, nil
+	return -1.0, fmt.Errorf("Курс (%v-%v) за эту дату не был зафиксирован сервером", from_currency, to_currency)
 
 }
 func (db *DataBase) Read() ([]byte, error) {

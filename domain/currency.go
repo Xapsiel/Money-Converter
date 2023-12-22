@@ -15,12 +15,6 @@ func (c *Currency) GetCoefficient(from_currency, to_currency string) (float64, e
 	return a.GetCoef(from_currency, to_currency)
 }
 
-func (c *Currency) GetAllCoefficient(from_currency, to_currency string) (map[string]float64, error) {
-	a := repo.DataBase{Db: c}
-	return a.GetAllCoef(from_currency, to_currency)
-
-}
-
 func (c *Currency) ReadData() ([]byte, error) {
 	a := repo.DataBase{Db: c}
 	return a.Read()
@@ -29,5 +23,10 @@ func (c *Currency) ReadData() ([]byte, error) {
 func (c *Currency) UpdateDB(code string) error {
 	a := repo.DataBase{Db: c}
 	return a.Write(c.From_currency)
+
+}
+func (c *Currency) GetCoefficientByDate(from_currency, to_currency string, day, month, year int) (float64, error) {
+	a := repo.DataBase{Db: c}
+	return a.GetCoefByDate(from_currency, to_currency, day, month, year)
 
 }

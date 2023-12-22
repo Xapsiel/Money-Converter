@@ -11,8 +11,10 @@ import (
 
 func main() {
 	router := mux.NewRouter()
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../www/"))))
 	router.HandleFunc("/convert/{from}/{to}/{cash}", converterHandler)
-	router.HandleFunc("/makeGraph/{from}/{to}/{cash}", GraphHandler)
+	router.HandleFunc("/history_convert/{from}/{to}/{cash}/{day}/{month}/{year}", convertAnyDateHandler)
+
 	router.HandleFunc("/update", updateHandler)
 	http.ListenAndServe(":8080", router)
 }
@@ -30,7 +32,7 @@ func converterHandler(rw http.ResponseWriter, r *http.Request) {
 	to := value["to"]
 	cash, _ := strconv.ParseFloat(value["cash"], 64)
 	rw.Header().Set("Content-Type", "application/json")
-	forRes, err := application.Convert(from, to, cash)
+	forRes, err := application.ConvertToday(from, to, cash)
 	if err != nil {
 		panic(err)
 	}
@@ -39,27 +41,29 @@ func converterHandler(rw http.ResponseWriter, r *http.Request) {
 	rw.Write([]byte(res))
 }
 
-type GraphFormat struct {
-	From   string             `json:"from"`
-	To     string             `json:"to"`
-	Value  float64            `json:"value"`
-	Result map[string]float64 `json:"result"`
-}
-
-func GraphHandler(rw http.ResponseWriter, r *http.Request) {
+func convertAnyDateHandler(rw http.ResponseWriter, r *http.Request) {
 	value := mux.Vars(r)
 	from := value["from"]
 	to := value["to"]
 	cash, _ := strconv.ParseFloat(value["cash"], 64)
-	forRes, err := application.MakeGraph(from, to, cash)
+	day, _ := strconv.Atoi(value["day"])
+	month, _ := strconv.Atoi(value["month"])
+	year, _ := strconv.Atoi(value["year"])
+	rw.Header().Set("Content-Type", "application/json")
+	forRes, err := application.ConverAnyDay(from, to, day, month, year, cash)
+	result := converterFormat{From: from, To: to, Value: cash, Result: forRes}
+
 	if err != nil {
-		panic(err)
+		if err.Error() == "Курс (USD-RUB) за эту дату не был зафиксирован сервером" {
+			result.Result = 0
+		} else {
+			panic(err)
+		}
 	}
-	result := GraphFormat{From: from, To: to, Value: cash, Result: forRes}
 	res, _ := json.Marshal(result)
 	rw.Write([]byte(res))
-}
 
+}
 func updateHandler(rw http.ResponseWriter, r *http.Request) {
 	err := application.Update()
 	if err != nil {
