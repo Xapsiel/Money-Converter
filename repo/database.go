@@ -27,29 +27,7 @@ type JsonResult struct {
 	conversion_rates                                                                           map[string]float64
 }
 
-func (db *DataBase) GetCoef(from_currency, to_currency string) (float64, error) {
-	data, err := db.Read() //считываем json файл
-	if err != nil {
-		return -1.0, err
-	}
-	var document []jsonFormat
-	err = json.Unmarshal(data, &document) //превращаем json в формат []jsonFormat
-	if err != nil {
-		return -1.0, err
-	}
-	date := time.Now()
-	year := date.Year()
-	month := int(date.Month())
-	day := date.Day()
-	for _, elem := range document {
-		//проверка на дату и существование данной валюты
-		if elem.Year == year && elem.Month == month && elem.Day == day && elem.Conversion_rates[from_currency] != nil && elem.Conversion_rates[to_currency] != nil { //если дата совпадает с актуальной датой,то возвращаем курс относительно доллара
-			return elem.Conversion_rates[to_currency].(float64) / elem.Conversion_rates[from_currency].(float64), nil
-		}
-	}
-	return -1.0, fmt.Errorf("Курс за эту дату не был зафиксирован сервером")
-}
-func (db *DataBase) GetCoefByDate(from_currency, to_currency string, day, month, year int) (float64, error) {
+func (db *DataBase) GetCoef(from_currency, to_currency string, day, month, year int) (float64, error) {
 	data, err := db.Read() //считываем json файл
 	if err != nil {
 		return -1.0, err
