@@ -15,7 +15,7 @@ func main() {
 	router := mux.NewRouter()
 
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../www/"))))
-	router.HandleFunc("/convert/{from}/{to}/{cash}/{day}/{month}/{year}", convertHandler)
+	router.HandleFunc("/convert/{from}/{to}/{cash}/{day}/{month}/{year}", ConvertHandler)
 
 	router.HandleFunc("/update", updateHandler)
 	http.ListenAndServe(":8080", router)
@@ -24,11 +24,11 @@ func main() {
 type converterFormat struct {
 	From   string  `json:"from"`
 	To     string  `json:"to"`
-	Value  float64 `json: "value"`
+	Value  float64 `json:"value"`
 	Result float64 `json:"result"`
 }
 
-func convertHandler(rw http.ResponseWriter, r *http.Request) {
+func ConvertHandler(rw http.ResponseWriter, r *http.Request) {
 	EasterEggsCurrency := []string{"G-RUB", "OKT", "MOL", "BAL"}
 
 	value := mux.Vars(r)

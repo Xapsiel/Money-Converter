@@ -17,8 +17,8 @@ func TestUpdateError(t *testing.T) {
 	err := c.UpdateDB("USD")
 	if err != nil {
 		if err.Error() != "Курс за этот день уже обновлен" {
+			t.Fail()
 		}
-		t.Fail()
 	}
 }
 
