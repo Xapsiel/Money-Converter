@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -37,6 +38,14 @@ func convertHandler(rw http.ResponseWriter, r *http.Request) {
 	day, _ := strconv.Atoi(value["day"])
 	month, _ := strconv.Atoi(value["month"])
 	year, _ := strconv.Atoi(value["year"])
+
+	if (day + month + year) < 3 {
+		now := time.Now()
+		day = now.Day()
+		month = int(now.Month())
+		year = now.Year()
+	}
+
 	rw.Header().Set("Content-Type", "application/json")
 	forRes, err := application.Convert(from, to, day, month, year, cash)
 	result := converterFormat{From: from, To: to, Value: cash, Result: forRes}
